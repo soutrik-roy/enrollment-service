@@ -22,6 +22,8 @@ public class Enrollment {
     private String courseId;
     @Column(name = "enrolled_at")
     private LocalDateTime enrolledAt;
+    @Column(name = "course_name")
+    private String courseName;
     @Column(name = "progress")
     private int progress;
 

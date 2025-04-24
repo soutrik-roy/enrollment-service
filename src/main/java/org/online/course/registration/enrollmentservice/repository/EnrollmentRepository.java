@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface EnrollmentRepository extends R2dbcRepository<Enrollment, Long> {
     Flux<Enrollment> findByUserId(UUID userId);
 
-    Mono<Enrollment> findByCourseId(String courseId);
+    Flux<Enrollment> findByCourseId(String courseId);
 
     Mono<Enrollment> findByUserIdAndCourseId(UUID userId, String courseId);
 }

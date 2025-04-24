@@ -20,6 +20,7 @@ public class EnrollmentRouter {
                 .POST(ENROLLMENT_PATH, enrollmentHandler::createEnrollment)
                 .GET(ENROLLMENT_ID_PATH, enrollmentHandler::getEnrollmentById)
                 .GET(ENROLLMENT_USER_PATH, enrollmentHandler::getEnrollmentByUserId)
+                .GET(ENROLLMENT_COURSE_PATH, enrollmentHandler::getEnrollmentByCourseId)
                 .build();
     }
 }

@@ -3,6 +3,7 @@ package org.online.course.registration.enrollmentservice.handler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.online.course.registration.enrollmentservice.models.Enrollment;
+import org.online.course.registration.enrollmentservice.models.EnrollmentOutput;
 import org.online.course.registration.enrollmentservice.service.EnrollmentService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -60,11 +61,8 @@ public class EnrollmentHandler {
 
     public ServerResponse getEnrollmentByUserId(ServerRequest serverRequest) {
         try {
-            // extract userId from the request
             String userId = serverRequest.pathVariable("userId");
-
             Flux<Enrollment> enrollmentFlux = enrollmentService.findEnrollmentsByUserId(UUID.fromString(userId));
-
             enrollmentFlux.collectList().block();
 
             return ServerResponse.ok().body(enrollmentFlux);
@@ -75,5 +73,22 @@ public class EnrollmentHandler {
         }
     }
 
-    
+
+    public ServerResponse getEnrollmentByCourseId(ServerRequest serverRequest) {
+        try {
+            String courseId = serverRequest.pathVariable("courseId");
+
+            Flux<EnrollmentOutput> enrollmentByCourseId = enrollmentService.findEnrollmentByCourseId(courseId);
+
+            enrollmentByCourseId.collectList().block();
+
+            return ServerResponse.ok().body(enrollmentByCourseId);
+
+        } catch (Exception e) {
+            log.error("Error fetching enrollment by Course ID: {}", e.getMessage());
+            return ServerResponse.badRequest().body("Invalid Course ID");
+        }
+    }
+
+
 }
