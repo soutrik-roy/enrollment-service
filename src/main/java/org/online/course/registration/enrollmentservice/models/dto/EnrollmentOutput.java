@@ -1,4 +1,4 @@
-package org.online.course.registration.enrollmentservice.models;
+package org.online.course.registration.enrollmentservice.models.dto;
 
 import lombok.*;
 

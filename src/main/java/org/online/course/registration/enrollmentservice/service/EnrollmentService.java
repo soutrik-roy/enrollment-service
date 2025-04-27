@@ -4,7 +4,7 @@ package org.online.course.registration.enrollmentservice.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.online.course.registration.enrollmentservice.models.Enrollment;
-import org.online.course.registration.enrollmentservice.models.EnrollmentOutput;
+import org.online.course.registration.enrollmentservice.models.dto.EnrollmentOutput;
 import org.online.course.registration.enrollmentservice.repository.EnrollmentRepository;
 import org.online.course.registration.enrollmentservice.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -31,24 +31,23 @@ public class EnrollmentService {
     }
 
 
-    public void enrollUser(UUID userId, String courseId) {
+    public Mono<Object> enrollUser(UUID userId, String courseId) {
         log.info("Enrolling user with ID: {} in course: {}", userId, courseId);
 
-        userRepository.findByUserId(userId)
+        return userRepository.findByUserId(userId)
                 .switchIfEmpty(Mono.defer(() -> {
                     log.error("User with ID: {} not found", userId);
-                    return Mono.empty();
+                    return Mono.error(new IllegalArgumentException("User not found with ID: " + userId));
                 }))
                 .flatMap(userDetails -> {
                     if (!"Student".equalsIgnoreCase(userDetails.getRole())) {
-
                         log.error("User with ID: {} does not have the required role to enroll in a course", userId);
-                        return Mono.empty();
+                        return Mono.error(new IllegalArgumentException("User does not have the required role to enroll in a course"));
                     }
                     return enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                             .flatMap(existingEnrollment -> {
                                 log.error("User with ID: {} is already enrolled in course: {}", userId, courseId);
-                                return Mono.empty();
+                                return Mono.error(new IllegalStateException("User is already enrolled in the course"));
                             })
                             .switchIfEmpty(Mono.defer(() -> {
                                 Enrollment enrollment = Enrollment.builder()
@@ -59,10 +58,10 @@ public class EnrollmentService {
                                         .progress(0)
                                         .build();
                                 return enrollmentRepository.save(enrollment)
+                                        .cast(Enrollment.class) // Ensure the correct type is returned
                                         .doOnSuccess(savedEnrollment -> log.info("User with ID: {} successfully enrolled in course: {}", userId, courseId));
                             }));
-                })
-                .subscribe();
+                });
     }
 
 

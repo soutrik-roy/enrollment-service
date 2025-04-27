@@ -3,7 +3,7 @@ package org.online.course.registration.enrollmentservice.handler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.online.course.registration.enrollmentservice.models.Enrollment;
-import org.online.course.registration.enrollmentservice.models.EnrollmentOutput;
+import org.online.course.registration.enrollmentservice.models.dto.EnrollmentOutput;
 import org.online.course.registration.enrollmentservice.service.EnrollmentService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -33,18 +33,17 @@ public class EnrollmentHandler {
                 return ServerResponse.badRequest().body("User ID and Course ID are required");
             }
 
-            enrollmentService.enrollUser(UUID.fromString(userId), courseId);
-            return ServerResponse.ok().body("User enrolled successfully");
+            return enrollmentService.enrollUser(UUID.fromString(userId), courseId)
+                    .map(enrollment -> ServerResponse.ok().body("User " +userId+ " got enrolled successfully in: " + courseId))
+                    .block();
         } catch (Exception e) {
             log.error("Error during enrollment: {}", e.getMessage());
-            return ServerResponse.badRequest().body("Invalid request or enrollment failed");
+            return ServerResponse.badRequest().body(e.getMessage());
         }
     }
 
     public ServerResponse getEnrollmentById(ServerRequest serverRequest) {
         try {
-
-            // extract enrollmentId from the request
             String enrollmentId = serverRequest.pathVariable("id");
 
             Flux<Enrollment> enrollmentFlux = enrollmentService.findEnrollmentsByUserId(UUID.fromString(enrollmentId));
