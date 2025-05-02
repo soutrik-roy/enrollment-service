@@ -10,7 +10,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 public class EnrollmentRouter {
     public static final String ENROLLMENT_PATH = "/enrollment";
     public static final String ENROLLMENT_COURSE_PATH = "/enrollment/course/{courseId}";
-    public static final String ENROLLMENT_USER_PATH = "/enrollment/user/{email}";
+    public static final String ENROLLMENT_USER_PATH = "/enrollments/{email}";
 
     @Bean
     RouterFunction<ServerResponse> routes(EnrollmentHandler enrollmentHandler) {

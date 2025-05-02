@@ -4,35 +4,43 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.online.course.registration.enrollmentservice.models.dto.EnrollmentOutput;
 import org.online.course.registration.enrollmentservice.service.EnrollmentService;
+import org.online.course.registration.enrollmentservice.config.JwtUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import reactor.core.publisher.Flux;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Log4j2
 @RequiredArgsConstructor
 public class EnrollmentHandler {
 
-
     private final EnrollmentService enrollmentService;
-
-
+    private final JwtUtils jwtUtils;
 
     public ServerResponse createEnrollment(ServerRequest serverRequest) {
         try {
+            String authHeader = serverRequest.headers().firstHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ServerResponse.status(401).body("Missing or invalid Authorization header");
+            }
+            String token = authHeader.substring(7);
+            if (jwtUtils.validateToken(token)) {
+                return ServerResponse.status(401).body("Invalid or expired token");
+            }
 
             var requestBody = serverRequest.body(Map.class);
-            String email= requestBody.get("email").toString();
+            String email = requestBody.get("email").toString();
             String courseId = (String) requestBody.get("courseid");
             if (email == null || courseId == null) {
-                return ServerResponse.badRequest().body("email and Course ID are required");
+                return ServerResponse.badRequest().body("Email and Course ID are required");
             }
 
             return enrollmentService.enrollUser(email, courseId)
-                    .map(enrollment -> ServerResponse.ok().body("User  with emailId " +email+ " got enrolled successfully in: " + courseId))
+                    .map(enrollment -> ServerResponse.ok().body("User with emailId " + email + " got enrolled successfully in: " + courseId))
                     .block();
         } catch (Exception e) {
             log.error("Error during enrollment: {}", e.getMessage());
@@ -40,19 +48,32 @@ public class EnrollmentHandler {
         }
     }
 
-
     public ServerResponse getEnrollmentByEmail(ServerRequest serverRequest) {
         try {
+            String authHeader = serverRequest.headers().firstHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ServerResponse.status(401).body("Missing or invalid Authorization header");
+            }
+            String token = authHeader.substring(7);
+            if (jwtUtils.validateToken(token)) {
+                return ServerResponse.status(401).body("Invalid or expired token");
+            }
+
+
+
             String email = serverRequest.pathVariable("email");
             Flux<EnrollmentOutput> enrollmentFlux = enrollmentService.findEnrollmentsByEmail(email)
                     .map(enrollment -> EnrollmentOutput.builder()
-                            .userEmail(enrollment.getEmail())
                             .courseId(enrollment.getCourseId())
                             .courseName(enrollment.getCourseName())
                             .progress(enrollment.getProgress())
                             .build())
                     .switchIfEmpty(Flux.error(new IllegalArgumentException("No enrollments found for email: " + email)));
             enrollmentFlux.collectList().block();
+            if (Objects.requireNonNull(enrollmentFlux.collectList().block()).isEmpty()) {
+                return ServerResponse.status(404).body("No enrollments found for email: " + email);
+            }
+
             return ServerResponse.ok().body(enrollmentFlux);
 
         } catch (Exception e) {
@@ -61,9 +82,17 @@ public class EnrollmentHandler {
         }
     }
 
-
     public ServerResponse getEnrollmentByCourseId(ServerRequest serverRequest) {
         try {
+            String authHeader = serverRequest.headers().firstHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ServerResponse.status(401).body("Missing or invalid Authorization header");
+            }
+            String token = authHeader.substring(7);
+            if (jwtUtils.validateToken(token)) {
+                return ServerResponse.status(401).body("Invalid or expired token");
+            }
+
             String courseId = serverRequest.pathVariable("courseId");
 
             Flux<EnrollmentOutput> enrollmentByCourseId = enrollmentService.findEnrollmentByCourseId(courseId);
@@ -77,6 +106,4 @@ public class EnrollmentHandler {
             return ServerResponse.badRequest().body("Invalid Course ID");
         }
     }
-
-
 }

@@ -1,3 +1,6 @@
+jwt:
+  secret: a-very-very-long-random-secret-string-that-is-at-least-64-characters-long!
+  expiration: 86400000
 spring:
   application:
     name: enrollment-service
