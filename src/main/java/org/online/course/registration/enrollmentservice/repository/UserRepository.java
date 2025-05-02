@@ -6,11 +6,10 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 public interface UserRepository  extends R2dbcRepository<User, Long> {
 
 
-    @Query("SELECT * FROM user_details WHERE user_id = :userId")
-    Mono<User> findByUserId(UUID userId);
+
+    @Query("SELECT * FROM userS WHERE email = :email")
+    Mono<User> findByEmail(String email);
 }

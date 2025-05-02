@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+
 @RequiredArgsConstructor
 @Log4j2
 @Service
@@ -31,50 +31,49 @@ public class EnrollmentService {
     }
 
 
-    public Mono<Object> enrollUser(UUID userId, String courseId) {
-        log.info("Enrolling user with ID: {} in course: {}", userId, courseId);
+    public Mono<Object> enrollUser(String email, String courseId) {
+        log.info("Enrolling user with emailID: {} in course: {}", email, courseId);
 
-        return userRepository.findByUserId(userId)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.error("User with ID: {} not found", userId);
-                    return Mono.error(new IllegalArgumentException("User not found with ID: " + userId));
+                    log.error("User with emailID: {} not found", email);
+                    return Mono.error(new IllegalArgumentException("User not found with emailID: " + email));
                 }))
                 .flatMap(userDetails -> {
                     if (!"Student".equalsIgnoreCase(userDetails.getRole())) {
-                        log.error("User with ID: {} does not have the required role to enroll in a course", userId);
+                        log.error("User with emailID: {} does not have the required role to enroll in a course", email);
                         return Mono.error(new IllegalArgumentException("User does not have the required role to enroll in a course"));
                     }
-                    return enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                    return enrollmentRepository.findByEmailAndCourseId(email, courseId)
                             .flatMap(existingEnrollment -> {
-                                log.error("User with ID: {} is already enrolled in course: {}", userId, courseId);
+                                log.error("User with ID: {} is already enrolled in course: {}", email, courseId);
                                 return Mono.error(new IllegalStateException("User is already enrolled in the course"));
                             })
                             .switchIfEmpty(Mono.defer(() -> {
                                 Enrollment enrollment = Enrollment.builder()
-                                        .userId(userId)
+                                        .email(email)
                                         .courseId(courseId)
                                         .courseName(courseIdToNameMap.get(courseId))
                                         .enrolledAt(java.time.LocalDateTime.now())
                                         .progress(0)
                                         .build();
                                 return enrollmentRepository.save(enrollment)
-                                        .cast(Enrollment.class) // Ensure the correct type is returned
-                                        .doOnSuccess(savedEnrollment -> log.info("User with ID: {} successfully enrolled in course: {}", userId, courseId));
+                                        .cast(Enrollment.class)
+                                        .doOnSuccess(savedEnrollment -> log.info("User with emailID : {} successfully enrolled in course: {}", email, courseId));
                             }));
                 });
     }
 
 
-    public Flux<Enrollment> findEnrollmentsByUserId(UUID userId) {
-        return enrollmentRepository.findByUserId(userId);
+    public Flux<Enrollment> findEnrollmentsByEmail(String email) {
+        return enrollmentRepository.findByEmail(email);
     }
 
     public Flux<EnrollmentOutput> findEnrollmentByCourseId(String courseId) {
         return enrollmentRepository.findByCourseId(courseId)
-                .flatMap(enrollment -> userRepository.findByUserId(enrollment.getUserId())
+                .flatMap(enrollment -> userRepository.findByEmail(enrollment.getEmail())
                         .map(userDetails -> {
                             EnrollmentOutput output = new EnrollmentOutput();
-                            output.setUserId(userDetails.getUserId());
                             output.setUserName(userDetails.getName());
                             output.setCourseId(enrollment.getCourseId());
                             output.setCourseName(enrollment.getCourseName());

@@ -6,7 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.UUID;
+
 @Data
 @Builder
 @ToString
@@ -16,8 +16,8 @@ import java.util.UUID;
 public class Enrollment {
     @Id
     private Long id;
-    @Column(name = "user_id")
-    private UUID userId;
+    @Column(name = "email")
+    private String email;
     @Column(name = "course_id")
     private String courseId;
     @Column(name = "enrolled_at")

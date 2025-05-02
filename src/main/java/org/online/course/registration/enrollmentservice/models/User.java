@@ -8,16 +8,13 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.UUID;
 @Data
 @Builder
 @ToString
-@Table(name = "user_details")
+@Table(name = "users")
 public class User {
     @Id
     private Long id;
-    @Column(name = "user_id")
-    private UUID userId;
     @Column(name = "name")
     private String name;
     @Column(name = "email")
