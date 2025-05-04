@@ -2,16 +2,14 @@ package org.online.course.registration.enrollmentservice.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.online.course.registration.enrollmentservice.config.JwtUtils;
 import org.online.course.registration.enrollmentservice.models.dto.EnrollmentOutput;
 import org.online.course.registration.enrollmentservice.service.EnrollmentService;
-import org.online.course.registration.enrollmentservice.config.JwtUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
-import reactor.core.publisher.Flux;
 
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 @Log4j2
@@ -59,29 +57,27 @@ public class EnrollmentHandler {
                 return ServerResponse.status(401).body("Invalid or expired token");
             }
 
-
-
             String email = serverRequest.pathVariable("email");
-            Flux<EnrollmentOutput> enrollmentFlux = enrollmentService.findEnrollmentsByEmail(email)
+            var enrollments = enrollmentService.findEnrollmentsByEmail(email)
                     .map(enrollment -> EnrollmentOutput.builder()
                             .courseId(enrollment.getCourseId())
                             .courseName(enrollment.getCourseName())
                             .progress(enrollment.getProgress())
                             .build())
-                    .switchIfEmpty(Flux.error(new IllegalArgumentException("No enrollments found for email: " + email)));
-            enrollmentFlux.collectList().block();
-            if (Objects.requireNonNull(enrollmentFlux.collectList().block()).isEmpty()) {
+                    .collectList()
+                    .block();
+
+            if (enrollments == null || enrollments.isEmpty()) {
                 return ServerResponse.status(404).body("No enrollments found for email: " + email);
             }
 
-            return ServerResponse.ok().body(enrollmentFlux);
+            return ServerResponse.ok().body(enrollments);
 
         } catch (Exception e) {
             log.error("Error fetching enrollment by email: {}", e.getMessage());
             return ServerResponse.badRequest().body("User with email ID not found");
         }
     }
-
     public ServerResponse getEnrollmentByCourseId(ServerRequest serverRequest) {
         try {
             String authHeader = serverRequest.headers().firstHeader("Authorization");
@@ -95,11 +91,15 @@ public class EnrollmentHandler {
 
             String courseId = serverRequest.pathVariable("courseId");
 
-            Flux<EnrollmentOutput> enrollmentByCourseId = enrollmentService.findEnrollmentByCourseId(courseId);
+            var enrollments = enrollmentService.findEnrollmentByCourseId(courseId)
+                    .collectList()
+                    .block();
 
-            enrollmentByCourseId.collectList().block();
+            if (enrollments == null || enrollments.isEmpty()) {
+                return ServerResponse.status(404).body("No enrollments found for course ID: " + courseId);
+            }
 
-            return ServerResponse.ok().body(enrollmentByCourseId);
+            return ServerResponse.ok().body(enrollments);
 
         } catch (Exception e) {
             log.error("Error fetching enrollment by Course ID: {}", e.getMessage());
