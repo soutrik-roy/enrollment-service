@@ -10,6 +10,6 @@ public interface UserRepository  extends R2dbcRepository<User, Long> {
 
 
 
-    @Query("SELECT * FROM userS WHERE email = :email")
+    @Query("SELECT * FROM users WHERE email = :email")
     Mono<User> findByEmail(String email);
 }
