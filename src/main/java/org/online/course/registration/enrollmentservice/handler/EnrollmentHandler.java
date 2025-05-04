@@ -32,7 +32,7 @@ public class EnrollmentHandler {
 
             var requestBody = serverRequest.body(Map.class);
             String email = requestBody.get("email").toString();
-            String courseId = (String) requestBody.get("courseid");
+            String courseId = (String) requestBody.get("courseId");
             if (email == null || courseId == null) {
                 return ServerResponse.badRequest().body("Email and Course ID are required");
             }

@@ -5,11 +5,11 @@ spring:
   application:
     name: enrollment-service
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/soutrikroy
-    username: soutrikroy
-    password: Sharanya@24
+    url: r2dbc:postgresql://localhost:5432/userservice
+    username: postgres
+    password: shivanshu
   server:
-    port: 8080
+    port: 8082
   logging:
     level:
       org.springframework: INFO
